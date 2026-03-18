@@ -8,15 +8,21 @@ cc_binary {
         "NeuralBindImpl.cpp",
     ],
     
+    // TELL THE COMPILER WHERE TO FIND THE HEADERS
+    include_dirs: [
+        "external/tensorflow",
+        "external/flatbuffers/include",
+    ],
+    
     shared_libs: [
         "libbase",
         "libbinder_ndk",
         "liblog",
         "libutils",
         "android.hardware.neuralbind-V1-ndk",
+        "libtflite", // <-- Using the OS's built-in, unstripped engine!
     ],
     
-    // Add VINTF manifest so Android knows this HAL exists
     vintf_fragments: ["neuralbind_manifest.xml"],
     init_rc: ["neuralbind-service.rc"],
     
@@ -25,6 +31,5 @@ cc_binary {
         "-Werror",
     ],
     
-    // Enforce modern C++
     cpp_std: "gnu++20",
 }
