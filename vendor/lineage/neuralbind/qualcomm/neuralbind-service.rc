@@ -1,0 +1,6 @@
+service vendor.neuralbind /vendor/bin/hw/android.hardware.neuralbind-service
+    class hal
+    user system
+    group system
+    # Allow the service to restart if it crashes
+    restart_period 10

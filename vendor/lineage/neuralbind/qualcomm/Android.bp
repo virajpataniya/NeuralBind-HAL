@@ -1,0 +1,30 @@
+cc_binary {
+    name: "android.hardware.neuralbind-service",
+    relative_install_path: "hw",
+    vendor: true,
+    
+    srcs: [
+        "service.cpp",
+        "NeuralBindImpl.cpp",
+    ],
+    
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+        "libutils",
+        "android.hardware.neuralbind-V1-ndk",
+    ],
+    
+    // Add VINTF manifest so Android knows this HAL exists
+    vintf_fragments: ["neuralbind_manifest.xml"],
+    init_rc: ["neuralbind-service.rc"],
+    
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    
+    // Enforce modern C++
+    cpp_std: "gnu++20",
+}
