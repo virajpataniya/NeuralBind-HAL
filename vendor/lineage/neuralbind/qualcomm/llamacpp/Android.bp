@@ -1,0 +1,128 @@
+// 1. The C-only Core
+cc_library_static {
+    name: "libggml_c",
+    vendor: true,
+    
+    srcs: [
+        "ggml/src/ggml.c",
+        "ggml/src/ggml-alloc.c",
+        "ggml/src/ggml-quants.c",
+        "ggml/src/ggml-cpu/**/*.c",
+    ],
+    
+    // THIS IS THE FIX: Blacklist incompatible PC and RISC-V architectures
+    exclude_srcs: [
+        "ggml/src/ggml-cpu/arch/riscv/**/*.c",
+        "ggml/src/ggml-cpu/arch/x86/**/*.c",
+        "ggml/src/ggml-cpu/arch/wasm/**/*.c",
+        "ggml/src/ggml-cpu/arch/loongarch/**/*.c",
+        "ggml/src/ggml-cpu/arch/s390x/**/*.c",
+        // ADD THIS LINE to block SpacemiT RISC-V C files
+        "ggml/src/ggml-cpu/spacemit/**/*.c",
+        // ADD THIS: Block Kleidiai C files
+        "ggml/src/ggml-cpu/kleidiai/**/*.c",
+    ],
+    
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-O3",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+        "-Wno-unused-function",
+        "-D_XOPEN_SOURCE=600",
+        "-DGGML_USE_CPU",
+        "-DGGML_VERSION=\"aosp\"",
+        "-DGGML_COMMIT=\"aosp\"",
+        "-D__ARM_FEATURE_DIRECTED_ROUNDING",
+        "-Wno-non-virtual-dtor",
+        "-Wno-error=non-virtual-dtor",
+    ],
+    
+local_include_dirs: [
+        "include",
+        "src",
+        "ggml/include",
+        "ggml/src",
+        // ADD THESE TWO NEW LINES:
+        "ggml/src/ggml-cpu",
+        "ggml/src/ggml-cpu/arch/arm",
+    ],
+    export_include_dirs: [
+        "include",
+        "ggml/include",
+    ],
+}
+
+// 2. The C++ Engine
+cc_library_static {
+    name: "libllamacpp_static",
+    vendor: true,
+    
+    srcs: [
+        "src/*.cpp",
+        "ggml/src/ggml.cpp",
+        "ggml/src/ggml-backend.cpp",
+        "ggml/src/ggml-backend-dl.cpp",
+        "ggml/src/ggml-backend-reg.cpp",
+        "ggml/src/ggml-opt.cpp",
+        "ggml/src/ggml-threading.cpp",
+        "ggml/src/gguf.cpp",
+        "ggml/src/ggml-cpu/**/*.cpp",
+    ],
+    
+    // AND BLACKLIST THEM HERE TOO:
+    exclude_srcs: [
+        "ggml/src/ggml-cpu/arch/riscv/**/*.cpp",
+        "ggml/src/ggml-cpu/arch/x86/**/*.cpp",
+        "ggml/src/ggml-cpu/arch/wasm/**/*.cpp",
+        "ggml/src/ggml-cpu/arch/loongarch/**/*.cpp",
+        "ggml/src/ggml-cpu/arch/s390x/**/*.cpp",
+        // ADD THIS LINE to block SpacemiT RISC-V C files
+        "ggml/src/ggml-cpu/spacemit/**/*.cpp",
+        // ADD THIS: Block Kleidiai C++ files
+        "ggml/src/ggml-cpu/kleidiai/**/*.cpp",
+    ],
+    
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-O3",
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+        "-Wno-unused-function",
+        "-Wno-implicit-fallthrough",
+        "-D_XOPEN_SOURCE=600",
+        "-DGGML_USE_CPU",
+        "-DGGML_VERSION=\"aosp\"",
+        "-DGGML_COMMIT=\"aosp\"",
+        "-D__ARM_FEATURE_DIRECTED_ROUNDING",
+        "-Wno-non-virtual-dtor",
+        "-Wno-error=non-virtual-dtor",
+    ],
+    
+    cppflags: [
+        "-fexceptions",
+    ],
+    
+local_include_dirs: [
+        "include",
+        "src",
+        "ggml/include",
+        "ggml/src",
+        // ADD THESE TWO NEW LINES:
+        "ggml/src/ggml-cpu",
+        "ggml/src/ggml-cpu/arch/arm",
+    ],
+    export_include_dirs: [
+        "include",
+        "ggml/include",
+    ],
+    
+    cpp_std: "c++17",
+    rtti: true,
+    
+    whole_static_libs: [
+        "libggml_c",
+    ],
+}
