@@ -45,20 +45,137 @@ ndk::ScopedAStatus NeuralBindImpl::submitPrompt(
     ALOGD("submitPrompt called with prompt: %s", prompt.c_str());
     
     std::thread([this, prompt, callback]() {
-        ALOGD("Worker Thread: Processing prompt...");
+        ALOGD("Worker Thread: Starting modern llama.cpp inference pipeline...");
         
-        // Check our new llama.cpp variables instead of TFLite
         if (!mContext || !mModel) {
-             ALOGE("Cannot run inference: Context is null! Did you call loadModel first?");
-             if (callback != nullptr) callback->onResponse("Error: Model not loaded.", true);
-             return;
+            ALOGE("FATAL: Model or Context is null! Call loadModel() first.");
+            if (callback != nullptr) callback->onResponse("Error: Model not loaded.", true);
+            return;
         }
         
-        ALOGD("Model is locked and loaded. Awaiting inference loop!");
+        // ========================================================================
+        // STEP 1: Get the Vocab (NEW API REQUIREMENT)
+        // ========================================================================
+        const struct llama_vocab * vocab = llama_model_get_vocab(mModel);
+        
+        // ========================================================================
+        // STEP 2: Tokenization
+        // ========================================================================
+        ALOGD("Tokenizing prompt...");
+        const int max_tokens = prompt.length() + 16;
+        std::vector<llama_token> tokens(max_tokens);
+        
+        int n_tokens = llama_tokenize(
+            vocab, // <-- Changed from mModel to vocab
+            prompt.c_str(),
+            prompt.length(),
+            tokens.data(),
+            max_tokens,
+            true,  // add_bos
+            true   // special
+        );
+        
+        if (n_tokens < 0) {
+            ALOGE("Tokenization failed! Needed: %d", -n_tokens);
+            if (callback != nullptr) callback->onResponse("Error: Tokenization failed.", true);
+            return;
+        }
+        tokens.resize(n_tokens);
+        ALOGI("Tokenized prompt into %d tokens.", n_tokens);
+        
+        // ========================================================================
+        // STEP 3: Prompt Evaluation (NEW BATCH API)
+        // ========================================================================
+        llama_batch batch = llama_batch_init(n_tokens, 0, 1);
+        batch.n_tokens = n_tokens;
+        
+        // Manually fill the batch arrays
+        for (int i = 0; i < n_tokens; i++) {
+            batch.token[i] = tokens[i];
+            batch.pos[i] = i;
+            batch.n_seq_id[i] = 1;
+            batch.seq_id[i][0] = 0;
+            batch.logits[i] = false;
+        }
+        // Mark the last token to generate logits (needed for sampling the next word)
+        batch.logits[n_tokens - 1] = true;
+        
+        if (llama_decode(mContext, batch) != 0) {
+            ALOGE("FATAL: llama_decode failed during prompt evaluation!");
+            llama_batch_free(batch);
+            if (callback != nullptr) callback->onResponse("Error: Prompt evaluation failed.", true);
+            return;
+        }
+        
+        // ========================================================================
+        // STEP 4: Token Generation Loop (NEW SAMPLER API)
+        // ========================================================================
+        const int max_gen_tokens = 512;
+        int n_generated = 0;
+        
+        llama_token eos_token = llama_vocab_eos(vocab); // <-- Changed from llama_token_eos
+        
+        // Initialize the new modular sampler
+        struct llama_sampler * smpl = llama_sampler_init_greedy();
+        
+        while (n_generated < max_gen_tokens) {
+            // Sample the next token
+            llama_token new_token = llama_sampler_sample(smpl, mContext, -1);
+            llama_sampler_accept(smpl, new_token);
+            
+            if (new_token == eos_token) {
+                ALOGI("EOS token detected. Stopping generation.");
+                break;
+            }
+            
+            // ====================================================================
+            // STEP 5: Detokenization
+            // ====================================================================
+            char piece_buf[256];
+            int n_chars = llama_token_to_piece(
+                vocab, // <-- Changed from mModel to vocab
+                new_token,
+                piece_buf,
+                sizeof(piece_buf),
+                0,
+                true
+            );
+            
+            if (n_chars > 0) {
+                std::string piece(piece_buf, n_chars);
+                if (callback != nullptr) {
+                    callback->onResponse(piece, false); 
+                }
+            }
+            
+            // ====================================================================
+            // STEP 6: Prepare next iteration (MANUAL BATCH ASSIGNMENT)
+            // ====================================================================
+            batch.n_tokens = 1;
+            batch.token[0] = new_token;
+            batch.pos[0] = n_tokens + n_generated;
+            batch.n_seq_id[0] = 1;
+            batch.seq_id[0][0] = 0;
+            batch.logits[0] = true;
+            
+            if (llama_decode(mContext, batch) != 0) {
+                ALOGE("FATAL: llama_decode failed during generation!");
+                break;
+            }
+            
+            n_generated++;
+        }
+        
+        // ========================================================================
+        // STEP 7: Cleanup
+        // ========================================================================
+        llama_sampler_free(smpl); // Free the new sampler
+        llama_batch_free(batch);
         
         if (callback != nullptr) {
-            callback->onResponse("ACK: Llama engine loaded and ready for inference!", true);
+            callback->onResponse("[DONE]", true);
         }
+        
     }).detach();
     
     return ndk::ScopedAStatus::ok();
