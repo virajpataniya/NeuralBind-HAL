@@ -8,10 +8,9 @@ cc_binary {
         "NeuralBindImpl.cpp",
     ],
     
-    // TELL THE COMPILER WHERE TO FIND THE HEADERS
     include_dirs: [
-        "external/tensorflow",
-        "external/flatbuffers/include",
+        "vendor/lineage/neuralbind/qualcomm/llamacpp/include",
+        "vendor/lineage/neuralbind/qualcomm/llamacpp/ggml/include",
     ],
     
     shared_libs: [
@@ -20,7 +19,13 @@ cc_binary {
         "liblog",
         "libutils",
         "android.hardware.neuralbind-V1-ndk",
-        "libtflite", // <-- Using the OS's built-in, unstripped engine!
+        // DELETED libtflite!
+    ],
+    
+    // ADD THE NEW ENGINE HERE:
+    static_libs: [
+        "libllamacpp_static",
+        "libggml_c",
     ],
     
     vintf_fragments: ["neuralbind_manifest.xml"],

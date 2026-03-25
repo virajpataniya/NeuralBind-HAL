@@ -3,12 +3,9 @@
 #include <aidl/android/hardware/neuralbind/BnNeuralBind.h>
 #include <aidl/android/hardware/neuralbind/IInferenceCallback.h>
 
-// TensorFlow Lite headers
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/model_builder.h"
-#include "tensorflow/lite/kernels/register.h"
+// The New Brain: llama.cpp
+#include "llama.h"
 
-#include <memory>
 #include <string>
 
 namespace aidl {
@@ -28,9 +25,9 @@ public:
         const std::shared_ptr<IInferenceCallback>& callback) override;
 
 private:
-    // TFLite Engine Components
-    std::unique_ptr<tflite::FlatBufferModel> mModel;
-    std::unique_ptr<tflite::Interpreter> mInterpreter;
+    // llama.cpp Engine Components (Replacing TFLite)
+    llama_model* mModel = nullptr;
+    llama_context* mContext = nullptr;
 };
 
 }  // namespace neuralbind

@@ -61,6 +61,7 @@ cc_library_static {
     
     srcs: [
         "src/*.cpp",
+        "src/models/*.cpp",
         "ggml/src/ggml.cpp",
         "ggml/src/ggml-backend.cpp",
         "ggml/src/ggml-backend-dl.cpp",
