@@ -238,5 +238,9 @@ WPA_SUPPLICANT_VERSION := VER_0_8_X
 # NeuralBind Compatibility Matrix
 DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += vendor/lineage/neuralbind/qualcomm/neuralbind_fcm.xml
 
+# System-side SELinux Policy Directories for Custom HALs
+SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += device/xiaomi/garnet/sepolicy/public
+SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += device/xiaomi/garnet/sepolicy/private
+
 # Vendor
 include vendor/xiaomi/garnet/BoardConfigVendor.mk

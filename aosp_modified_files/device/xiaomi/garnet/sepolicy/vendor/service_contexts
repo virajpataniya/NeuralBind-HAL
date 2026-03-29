@@ -1,0 +1,2 @@
+# NeuralBind HAL service context
+android.hardware.neuralbind.INeuralBind/default    u:object_r:hal_neuralbind_service:s0

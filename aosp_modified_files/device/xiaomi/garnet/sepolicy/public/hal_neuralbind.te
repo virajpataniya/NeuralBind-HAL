@@ -1,0 +1,5 @@
+# 1. Define the base Treble attribute (System side)
+hal_attribute(neuralbind);
+
+# 2. Define the service type
+type hal_neuralbind_service, hal_service_type, service_manager_type;

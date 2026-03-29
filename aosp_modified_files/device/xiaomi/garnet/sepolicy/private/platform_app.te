@@ -1,0 +1,5 @@
+# Allow the system app to act as a client to the NeuralBind HAL
+hal_client_domain(platform_app, hal_neuralbind)
+
+# Explicitly allow Binder IPC calls TO the NeuralBind HAL
+binder_call(platform_app, hal_neuralbind_server)

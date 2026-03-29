@@ -27,6 +27,7 @@ ndk::ScopedAStatus NeuralBindImpl::loadModel(const std::string& path) {
 
     // 3. Create the execution context
     llama_context_params ctx_params = llama_context_default_params();
+    ctx_params.n_ctx = 2048;
     mContext = llama_new_context_with_model(mModel, ctx_params);
     
     if (!mContext) {
@@ -52,6 +53,15 @@ ndk::ScopedAStatus NeuralBindImpl::submitPrompt(
             if (callback != nullptr) callback->onResponse("Error: Model not loaded.", true);
             return;
         }
+
+        // Wipe short-term memory before tokenizing the new prompt
+        // Destroy the old memory bucket and make a fresh 2048-token one
+        if (mContext) {
+            llama_free(mContext);
+        }
+        llama_context_params ctx_params = llama_context_default_params();
+        ctx_params.n_ctx = 2048;
+        mContext = llama_new_context_with_model(mModel, ctx_params);
         
         // ========================================================================
         // STEP 1: Get the Vocab (NEW API REQUIREMENT)

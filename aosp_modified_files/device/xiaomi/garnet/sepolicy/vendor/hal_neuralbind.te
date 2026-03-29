@@ -1,0 +1,24 @@
+# 3. Define the executable and domain
+type hal_neuralbind_default, domain;
+type hal_neuralbind_default_exec, exec_type, vendor_file_type, file_type;
+
+# 4. Link the domain to the server attribute (Pass the hal_ prefix!)
+hal_server_domain(hal_neuralbind_default, hal_neuralbind)
+init_daemon_domain(hal_neuralbind_default)
+
+# 5. Link the service to the attribute
+hal_attribute_service(hal_neuralbind, hal_neuralbind_service)
+
+# 6. Binder IPC
+binder_use(hal_neuralbind_default)
+
+# Explicitly allow Binder IPC callbacks TO the platform app
+binder_call(hal_neuralbind_default, platform_app)
+
+# 7. Model access
+allow hal_neuralbind_default vendor_data_file:dir { search getattr };
+allow hal_neuralbind_default vendor_data_file:file { read open getattr map };
+
+# 8. Logging
+allow hal_neuralbind_default logd:unix_stream_socket connectto;
+allow hal_neuralbind_default logd_socket:sock_file write;

@@ -26,8 +26,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class NeuralBindTest {
     private static final String SERVICE_NAME = "android.hardware.neuralbind.INeuralBind/default";
-    private static final String MODEL_PATH = "/data/local/tmp/gemma.gguf";
-    private static final String TEST_PROMPT = "Write a short haiku about Android development.";
+    private static final String MODEL_PATH = "/data/vendor/gemma.gguf";
 
     public static void main(String[] args) {
         try {
@@ -71,10 +70,16 @@ public class NeuralBindTest {
                 }
             };
 
+            String prompt = "Write a short haiku about Android development."; // Fallback default
+            if (args.length > 0) {
+                // Join all command line arguments into a single string
+                prompt = String.join(" ", args);
+            }
+
             // Submit prompt
-            System.out.println("\nSubmitting prompt: \"" + TEST_PROMPT + "\"");
+            System.out.println("\nSubmitting prompt: \"" + prompt + "\"");
             System.out.println("Response:\n");
-            service.submitPrompt(TEST_PROMPT, callback);
+            service.submitPrompt(prompt, callback);
 
             // Wait for completion
             latch.await();
