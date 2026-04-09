@@ -28,11 +28,17 @@ android_app {
         "androidx.compose.material3_material3",
         "androidx.compose.foundation_foundation",
         "androidx.compose.runtime_runtime",
+        "androidx.compose.material_material-icons-core",
+        "androidx.compose.material_material-icons-extended",
         "androidx.activity_activity-compose",
         "androidx.lifecycle_lifecycle-viewmodel-compose",
         "androidx.lifecycle_lifecycle-runtime-ktx",
+        "androidx.room_room-runtime",
+        "androidx.room_room-ktx",
         "android.hardware.neuralbind-V1-java",
     ],
+    
+    plugins: ["androidx.room_room-compiler-plugin"],
     
     optimize: {
         enabled: false,
